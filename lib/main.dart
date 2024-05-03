@@ -249,52 +249,65 @@ class _TaskItemState extends State<TaskItem> {
         priorityColor = highPriority;
         break;
     }
-    return InkWell(
-      onTap: () {
-        setState(() {
-          widget.task.isCompleted = !widget.task.isCompleted;
-        });
-      },
-      child: Container(
-        height: 84,
-        margin: const EdgeInsets.only(top: 8),
-        padding: const EdgeInsets.only(left: 16, right: 0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          color: themeData.colorScheme.surface,
-        ),
-        child: Row(
-          children: [
-            MyCheckBox(value: widget.task.isCompleted),
-            const SizedBox(
-              width: 16,
+    return Container(
+      height: 74,
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.only(left: 16, right: 0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: themeData.colorScheme.surface,
+      ),
+      child: Row(
+        children: [
+          MyCheckBox(
+            value: widget.task.isCompleted,
+            onTap: () {
+              setState(() {
+                widget.task.isCompleted = !widget.task.isCompleted;
+              });
+            },
+          ),
+          const SizedBox(
+            width: 16,
+          ),
+          Expanded(
+            child: Text(
+              widget.task.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                  fontSize: 14,
+                  decoration: widget.task.isCompleted
+                      ? TextDecoration.lineThrough
+                      : null),
             ),
-            Expanded(
-              child: Text(
-                widget.task.name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                    fontSize: 24,
-                    decoration: widget.task.isCompleted
-                        ? TextDecoration.lineThrough
-                        : null),
-              ),
+          ),
+          const SizedBox(
+            width: 8,
+          ),
+          InkWell(
+            onTap: () {
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => EditTaskScreen(task: widget.task)));
+            },
+            child: const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [Icon(CupertinoIcons.pencil), Text('Edit')],
             ),
-            const SizedBox(
-              width: 8,
-            ),
-            Container(
-              width: 5,
-              height: TaskItem.height,
-              decoration: BoxDecoration(
-                  color: priorityColor,
-                  borderRadius: const BorderRadius.only(
-                      topRight: Radius.circular(TaskItem.borderRadius),
-                      bottomRight: Radius.circular(TaskItem.borderRadius))),
-            )
-          ],
-        ),
+          ),
+          const SizedBox(
+            width: 8,
+          ),
+          Container(
+            width: 5,
+            height: TaskItem.height,
+            decoration: BoxDecoration(
+                color: priorityColor,
+                borderRadius: const BorderRadius.only(
+                    topRight: Radius.circular(TaskItem.borderRadius),
+                    bottomRight: Radius.circular(TaskItem.borderRadius))),
+          )
+        ],
       ),
     );
   }
@@ -302,27 +315,31 @@ class _TaskItemState extends State<TaskItem> {
 
 class MyCheckBox extends StatelessWidget {
   final bool value;
+  final Function() onTap;
 
-  const MyCheckBox({super.key, required this.value});
+  const MyCheckBox({super.key, required this.value, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final ThemeData themeData = Theme.of(context);
-    return Container(
-      width: 24,
-      height: 24,
-      decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border:
-              !value ? Border.all(color: secondaryTextColor, width: 2) : null,
-          color: value ? primaryColor : null),
-      child: value
-          ? Icon(
-              CupertinoIcons.check_mark,
-              size: 16,
-              color: themeData.colorScheme.onPrimary,
-            )
-          : null,
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        width: 24,
+        height: 24,
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border:
+                !value ? Border.all(color: secondaryTextColor, width: 2) : null,
+            color: value ? primaryColor : null),
+        child: value
+            ? Icon(
+                CupertinoIcons.check_mark,
+                size: 16,
+                color: themeData.colorScheme.onPrimary,
+              )
+            : null,
+      ),
     );
   }
 }
