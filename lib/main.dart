@@ -55,10 +55,13 @@ class MyApp extends StatelessWidget {
                 .titleLarge!
                 .apply(color: Colors.white),
           ),
+          snackBarTheme: const SnackBarThemeData(
+            backgroundColor: primaryColor,
+          ),
           textTheme: GoogleFonts.poppinsTextTheme(const TextTheme(
               titleLarge: TextStyle(fontWeight: FontWeight.bold))),
           inputDecorationTheme: const InputDecorationTheme(
-            // floatingLabelBehavior: FloatingLabelBehavior.never,
+              // floatingLabelBehavior: FloatingLabelBehavior.never,
               labelStyle: TextStyle(color: secondaryTextColor),
               border: InputBorder.none,
               iconColor: secondaryTextColor),
@@ -345,6 +348,7 @@ class _TaskItemState extends State<TaskItem> {
             onTap: () {
               setState(() {
                 widget.task.isCompleted = !widget.task.isCompleted;
+                widget.task.save();
               });
             },
           ),

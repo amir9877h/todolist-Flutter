@@ -27,7 +27,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
         backgroundColor: themeData.colorScheme.surface,
         foregroundColor: themeData.colorScheme.onSurface,
         titleTextStyle: themeData.textTheme.titleLarge,
-        title: const Text('Edit Task'),
+        title: Text(widget.task.name.isNotEmpty ? 'Edit Task' : 'Add Task'),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton.extended(
@@ -38,8 +38,15 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
             if (widget.task.isInBox) {
               widget.task.save();
             } else {
-              final Box<TaskEntity> box = Hive.box(taskBoxName);
-              box.add(widget.task);
+              if (_controller.text.isNotEmpty) {
+                final Box<TaskEntity> box = Hive.box(taskBoxName);
+                box.add(widget.task);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text('Empty task can not be add!'),
+                  behavior: SnackBarBehavior.fixed,
+                ));
+              }
             }
 
             Navigator.of(context).pop();
@@ -104,18 +111,27 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                     )),
               ],
             ),
-            TextField(
-              maxLines: null,
-              keyboardType: TextInputType.multiline,
-              controller: _controller,
-              decoration: InputDecoration(
-                  label: Text(
-                'Add a task for today...',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyLarge!
-                    .apply(fontSizeFactor: 1.2),
-              )),
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.vertical,
+                reverse: true,
+                physics: const BouncingScrollPhysics(),
+                child: TextField(
+                  maxLines: null,
+                  keyboardType: TextInputType.multiline,
+                  controller: _controller,
+                  decoration: InputDecoration(
+                      label: Text(
+                    widget.task.name.isEmpty
+                        ? 'Add a task for today...'
+                        : 'Edit your task',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyLarge!
+                        .apply(fontSizeFactor: 1.2),
+                  )),
+                ),
+              ),
             )
           ],
         ),
