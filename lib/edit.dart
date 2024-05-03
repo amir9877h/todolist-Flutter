@@ -37,10 +37,19 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
             widget.task.priority = widget.task.priority;
             if (widget.task.isInBox) {
               widget.task.save();
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('task edited!'),
+                behavior: SnackBarBehavior.fixed,
+              ));
             } else {
               if (_controller.text.isNotEmpty) {
                 final Box<TaskEntity> box = Hive.box(taskBoxName);
                 box.add(widget.task);
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  content: Text('task added!'),
+                  behavior: SnackBarBehavior.fixed,
+                ));
+                Navigator.of(context).pop();
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                   content: Text('Empty task can not be add!'),
@@ -48,14 +57,14 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                 ));
               }
             }
-
-            Navigator.of(context).pop();
           },
-          label: const Row(
+          label: Row(
             children: [
-              Text('Save Changes'),
+              Text(_controller.text.isNotEmpty ? 'Save Changes' : 'Add task'),
               Icon(
-                CupertinoIcons.check_mark,
+                _controller.text.isNotEmpty
+                    ? CupertinoIcons.check_mark
+                    : CupertinoIcons.add,
                 size: 18,
               ),
             ],
@@ -114,7 +123,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
             Expanded(
               child: SingleChildScrollView(
                 scrollDirection: Axis.vertical,
-                reverse: true,
+                // reverse: true,
                 physics: const BouncingScrollPhysics(),
                 child: TextField(
                   maxLines: null,
