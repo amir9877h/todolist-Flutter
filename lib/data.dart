@@ -5,11 +5,11 @@ part 'data.g.dart';
 @HiveType(typeId: 0)
 class TaskEntity extends HiveObject {
   @HiveField(0)
-  late String name;
+  String name = '';
   @HiveField(1)
-  late bool isCompleted;
+  bool isCompleted = false;
   @HiveField(2)
-  late Priority priority;
+  Priority priority = Priority.low;
 }
 
 @HiveType(typeId: 1)
