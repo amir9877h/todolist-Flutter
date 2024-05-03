@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:todolist/data.dart';
@@ -156,65 +157,116 @@ class HomeScreen extends StatelessWidget {
               child: ValueListenableBuilder<Box<TaskEntity>>(
                 valueListenable: box.listenable(),
                 builder: (context, box, child) {
-                  return ListView.builder(
-                      physics: const BouncingScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                      itemCount: box.values.length + 1,
-                      itemBuilder: (context, index) {
-                        if (index == 0) {
-                          return Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                  return box.isEmpty
+                      ? const EmptyState()
+                      : ListView.builder(
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                          itemCount: box.values.length + 1,
+                          itemBuilder: (context, index) {
+                            if (index == 0) {
+                              return Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    'Today',
-                                    style: themeData.textTheme.titleLarge!
-                                        .apply(fontSizeFactor: 0.9),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Today',
+                                        style: themeData.textTheme.titleLarge!
+                                            .apply(fontSizeFactor: 0.9),
+                                      ),
+                                      Container(
+                                        width: 70,
+                                        height: 3,
+                                        margin: const EdgeInsets.only(top: 4),
+                                        decoration: BoxDecoration(
+                                            color: primaryColor,
+                                            borderRadius:
+                                                BorderRadius.circular(1.5)),
+                                      )
+                                    ],
                                   ),
-                                  Container(
-                                    width: 70,
-                                    height: 3,
-                                    margin: const EdgeInsets.only(top: 4),
-                                    decoration: BoxDecoration(
-                                        color: primaryColor,
-                                        borderRadius:
-                                            BorderRadius.circular(1.5)),
-                                  )
+                                  MaterialButton(
+                                    color: const Color(0xffEAEFF5),
+                                    textColor: secondaryTextColor,
+                                    elevation: 0,
+                                    onPressed: () {
+                                      box.values
+                                          .where((_) => _.isCompleted)
+                                          .forEach((element) {
+                                        element.delete();
+                                      });
+                                    },
+                                    child: const Row(
+                                      children: [
+                                        Text('Delete Finished Tasks'),
+                                        SizedBox(
+                                          width: 4,
+                                        ),
+                                        Icon(
+                                          CupertinoIcons.delete_solid,
+                                          size: 18,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  MaterialButton(
+                                    color: const Color(0xffEAEFF5),
+                                    textColor: secondaryTextColor,
+                                    elevation: 0,
+                                    onPressed: () {
+                                      box.clear();
+                                    },
+                                    child: const Row(
+                                      children: [
+                                        Text('Delete All'),
+                                        SizedBox(
+                                          width: 4,
+                                        ),
+                                        Icon(
+                                          CupertinoIcons.delete_solid,
+                                          size: 18,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ],
-                              ),
-                              MaterialButton(
-                                color: const Color(0xffEAEFF5),
-                                textColor: secondaryTextColor,
-                                elevation: 0,
-                                onPressed: () {},
-                                child: const Row(
-                                  children: [
-                                    Text('Delete All'),
-                                    SizedBox(
-                                      width: 4,
-                                    ),
-                                    Icon(
-                                      CupertinoIcons.delete_solid,
-                                      size: 18,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          );
-                        } else {
-                          final task = box.values.toList()[index - 1];
-                          return TaskItem(task: task);
-                        }
-                      });
+                              );
+                            } else {
+                              final task = box.values.toList()[index - 1];
+                              return TaskItem(task: task);
+                            }
+                          });
                 },
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class EmptyState extends StatelessWidget {
+  const EmptyState({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SvgPicture.asset(
+          'assets/empty_state.svg',
+          width: 120,
+        ),
+        const SizedBox(
+          height: 12,
+        ),
+        const Text('Your task list is empty'),
+      ],
     );
   }
 }
@@ -294,6 +346,15 @@ class _TaskItemState extends State<TaskItem> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [Icon(CupertinoIcons.pencil), Text('Edit')],
             ),
+          ),
+          const SizedBox(
+            width: 16,
+          ),
+          InkWell(
+            onTap: () {
+              widget.task.delete();
+            },
+            child: const Icon(CupertinoIcons.delete_solid),
           ),
           const SizedBox(
             width: 8,
