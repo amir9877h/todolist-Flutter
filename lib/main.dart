@@ -58,6 +58,7 @@ class MyApp extends StatelessWidget {
           textTheme: GoogleFonts.poppinsTextTheme(const TextTheme(
               titleLarge: TextStyle(fontWeight: FontWeight.bold))),
           inputDecorationTheme: const InputDecorationTheme(
+            // floatingLabelBehavior: FloatingLabelBehavior.never,
               labelStyle: TextStyle(color: secondaryTextColor),
               border: InputBorder.none,
               iconColor: secondaryTextColor),
@@ -71,13 +72,16 @@ class MyApp extends StatelessWidget {
               onBackground: primaryTextColor,
               secondary: primaryColor,
               onSecondary: Colors.white)),
-      home: const HomeScreen(),
+      home: HomeScreen(),
     );
   }
 }
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  HomeScreen({super.key});
+
+  final TextEditingController controller = TextEditingController();
+  final ValueNotifier<String> searchKeywordNotifier = ValueNotifier('');
 
   @override
   Widget build(BuildContext context) {
@@ -142,10 +146,18 @@ class HomeScreen extends StatelessWidget {
                           )
                         ],
                       ),
-                      child: const TextField(
+                      child: TextField(
+                        onChanged: (value) {
+                          searchKeywordNotifier.value = controller.text;
+                        },
+                        controller: controller,
                         decoration: InputDecoration(
-                          prefixIcon: Icon(CupertinoIcons.search),
-                          label: Text('Search tasks...'),
+                          prefixIcon: const Icon(CupertinoIcons.search),
+                          hintText: 'Search tasks...',
+                          hintStyle: Theme.of(context)
+                              .inputDecorationTheme
+                              .labelStyle!,
+                          // label: Text('Search tasks...'),
                         ),
                       ),
                     ),
@@ -154,92 +166,109 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             Expanded(
-              child: ValueListenableBuilder<Box<TaskEntity>>(
-                valueListenable: box.listenable(),
-                builder: (context, box, child) {
-                  return box.isEmpty
-                      ? const EmptyState()
-                      : ListView.builder(
-                          physics: const BouncingScrollPhysics(),
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                          itemCount: box.values.length + 1,
-                          itemBuilder: (context, index) {
-                            if (index == 0) {
-                              return Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+              child: ValueListenableBuilder<String>(
+                valueListenable: searchKeywordNotifier,
+                builder: (context, value, child) {
+                  return ValueListenableBuilder<Box<TaskEntity>>(
+                    valueListenable: box.listenable(),
+                    builder: (context, box, child) {
+                      final List<TaskEntity> items;
+                      if (controller.text.isEmpty) {
+                        items = box.values.toList();
+                      } else {
+                        items = box.values
+                            .where(
+                                (task) => task.name.contains(controller.text))
+                            .toList();
+                      }
+                      return box.isEmpty
+                          ? const EmptyState()
+                          : ListView.builder(
+                              physics: const BouncingScrollPhysics(),
+                              padding:
+                                  const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                              itemCount: items.length + 1,
+                              itemBuilder: (context, index) {
+                                if (index == 0) {
+                                  return Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
                                     children: [
-                                      Text(
-                                        'Today',
-                                        style: themeData.textTheme.titleLarge!
-                                            .apply(fontSizeFactor: 0.9),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Today',
+                                            style: themeData
+                                                .textTheme.titleLarge!
+                                                .apply(fontSizeFactor: 0.9),
+                                          ),
+                                          Container(
+                                            width: 70,
+                                            height: 3,
+                                            margin:
+                                                const EdgeInsets.only(top: 4),
+                                            decoration: BoxDecoration(
+                                                color: primaryColor,
+                                                borderRadius:
+                                                    BorderRadius.circular(1.5)),
+                                          )
+                                        ],
                                       ),
-                                      Container(
-                                        width: 70,
-                                        height: 3,
-                                        margin: const EdgeInsets.only(top: 4),
-                                        decoration: BoxDecoration(
-                                            color: primaryColor,
-                                            borderRadius:
-                                                BorderRadius.circular(1.5)),
-                                      )
+                                      MaterialButton(
+                                        color: const Color(0xffEAEFF5),
+                                        textColor: secondaryTextColor,
+                                        elevation: 0,
+                                        onPressed: () {
+                                          box.values
+                                              .where((_) => _.isCompleted)
+                                              .forEach((element) {
+                                            element.delete();
+                                          });
+                                        },
+                                        child: const Row(
+                                          children: [
+                                            Text('Delete Finished Tasks'),
+                                            SizedBox(
+                                              width: 4,
+                                            ),
+                                            Icon(
+                                              CupertinoIcons.delete_solid,
+                                              size: 18,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      MaterialButton(
+                                        color: const Color(0xffEAEFF5),
+                                        textColor: secondaryTextColor,
+                                        elevation: 0,
+                                        onPressed: () {
+                                          box.clear();
+                                        },
+                                        child: const Row(
+                                          children: [
+                                            Text('Delete All'),
+                                            SizedBox(
+                                              width: 4,
+                                            ),
+                                            Icon(
+                                              CupertinoIcons.delete_solid,
+                                              size: 18,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ],
-                                  ),
-                                  MaterialButton(
-                                    color: const Color(0xffEAEFF5),
-                                    textColor: secondaryTextColor,
-                                    elevation: 0,
-                                    onPressed: () {
-                                      box.values
-                                          .where((_) => _.isCompleted)
-                                          .forEach((element) {
-                                        element.delete();
-                                      });
-                                    },
-                                    child: const Row(
-                                      children: [
-                                        Text('Delete Finished Tasks'),
-                                        SizedBox(
-                                          width: 4,
-                                        ),
-                                        Icon(
-                                          CupertinoIcons.delete_solid,
-                                          size: 18,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  MaterialButton(
-                                    color: const Color(0xffEAEFF5),
-                                    textColor: secondaryTextColor,
-                                    elevation: 0,
-                                    onPressed: () {
-                                      box.clear();
-                                    },
-                                    child: const Row(
-                                      children: [
-                                        Text('Delete All'),
-                                        SizedBox(
-                                          width: 4,
-                                        ),
-                                        Icon(
-                                          CupertinoIcons.delete_solid,
-                                          size: 18,
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              );
-                            } else {
-                              final task = box.values.toList()[index - 1];
-                              return TaskItem(task: task);
-                            }
-                          });
+                                  );
+                                } else {
+                                  final task = items[index - 1];
+                                  return TaskItem(task: task);
+                                }
+                              });
+                    },
+                  );
                 },
               ),
             ),
