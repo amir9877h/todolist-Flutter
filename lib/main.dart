@@ -24,6 +24,10 @@ const Color primaryColor = Color(0xff794CFF);
 const Color primaryVariantColor = Color(0xff5C0AFF);
 const secondaryTextColor = Color(0xffAFBED0);
 
+const normalPriority = Color(0xffF09819);
+const lowPriority = Color(0xff3BE1F1);
+const highPriority = primaryColor;
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -153,6 +157,7 @@ class HomeScreen extends StatelessWidget {
                 valueListenable: box.listenable(),
                 builder: (context, box, child) {
                   return ListView.builder(
+                      physics: const BouncingScrollPhysics(),
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                       itemCount: box.values.length + 1,
                       itemBuilder: (context, index) {
@@ -215,6 +220,8 @@ class HomeScreen extends StatelessWidget {
 }
 
 class TaskItem extends StatefulWidget {
+  static const double height = 85; //74;
+  static const double borderRadius = 8;
   const TaskItem({
     super.key,
     required this.task,
@@ -230,6 +237,18 @@ class _TaskItemState extends State<TaskItem> {
   @override
   Widget build(BuildContext context) {
     final themeData = Theme.of(context);
+    final Color priorityColor;
+    switch (widget.task.priority) {
+      case Priority.low:
+        priorityColor = lowPriority;
+        break;
+      case Priority.normal:
+        priorityColor = normalPriority;
+        break;
+      case Priority.high:
+        priorityColor = highPriority;
+        break;
+    }
     return InkWell(
       onTap: () {
         setState(() {
@@ -239,7 +258,7 @@ class _TaskItemState extends State<TaskItem> {
       child: Container(
         height: 84,
         margin: const EdgeInsets.only(top: 8),
-        padding: const EdgeInsets.only(left: 16, right: 16),
+        padding: const EdgeInsets.only(left: 16, right: 0),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(8),
           color: themeData.colorScheme.surface,
@@ -262,6 +281,18 @@ class _TaskItemState extends State<TaskItem> {
                         : null),
               ),
             ),
+            const SizedBox(
+              width: 8,
+            ),
+            Container(
+              width: 5,
+              height: TaskItem.height,
+              decoration: BoxDecoration(
+                  color: priorityColor,
+                  borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(TaskItem.borderRadius),
+                      bottomRight: Radius.circular(TaskItem.borderRadius))),
+            )
           ],
         ),
       ),
