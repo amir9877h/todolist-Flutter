@@ -1,7 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:todolist/data.dart';
+import 'package:provider/provider.dart';
+import 'package:todolist/data/data.dart';
+import 'package:todolist/data/repo/repository.dart';
 import 'package:todolist/main.dart';
 
 class EditTaskScreen extends StatefulWidget {
@@ -32,35 +33,28 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton.extended(
           onPressed: () {
-            // final task = TaskEntity();
-            widget.task.name = _controller.text;
-            widget.task.priority = widget.task.priority;
-            if (widget.task.isInBox) {
-              widget.task.save();
+            if (_controller.text.isNotEmpty) {
+              widget.task.name = _controller.text;
+              widget.task.priority = widget.task.priority;
+              final repository =
+                  Provider.of<Repository<TaskEntity>>(context, listen: false);
+              repository.createOrUpdate(widget.task).then((message) {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(message),
+                  behavior: SnackBarBehavior.fixed,
+                ));
+              });
+              Navigator.of(context).pop();
+            } else {
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                content: Text('task edited!'),
+                content: Text('Empty task can not be add!'),
                 behavior: SnackBarBehavior.fixed,
               ));
-            } else {
-              if (_controller.text.isNotEmpty) {
-                final Box<TaskEntity> box = Hive.box(taskBoxName);
-                box.add(widget.task);
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text('task added!'),
-                  behavior: SnackBarBehavior.fixed,
-                ));
-                Navigator.of(context).pop();
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text('Empty task can not be add!'),
-                  behavior: SnackBarBehavior.fixed,
-                ));
-              }
             }
           },
           label: Row(
             children: [
-              Text(_controller.text.isNotEmpty ? 'Save Changes' : 'Add task'),
+              Text(widget.task.name.isNotEmpty ? 'Save Changes' : 'Add task'),
               Icon(
                 _controller.text.isNotEmpty
                     ? CupertinoIcons.check_mark
