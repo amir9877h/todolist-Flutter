@@ -1,22 +1,26 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:todolist/data/data.dart';
-import 'package:todolist/data/repo/repository.dart';
 import 'package:todolist/main.dart';
+import 'package:todolist/screens/edit/cubit/edit_task_cubit.dart';
 
 class EditTaskScreen extends StatefulWidget {
-  final TaskEntity task;
-
-  const EditTaskScreen({super.key, required this.task});
+  const EditTaskScreen({super.key});
 
   @override
   State<EditTaskScreen> createState() => _EditTaskScreenState();
 }
 
 class _EditTaskScreenState extends State<EditTaskScreen> {
-  late final TextEditingController _controller =
-      TextEditingController(text: widget.task.name);
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    _controller = TextEditingController(
+        text: context.read<EditTaskCubit>().state.task.name);
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,91 +32,99 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
         backgroundColor: themeData.colorScheme.surface,
         foregroundColor: themeData.colorScheme.onSurface,
         titleTextStyle: themeData.textTheme.titleLarge,
-        title: Text(widget.task.name.isNotEmpty ? 'Edit Task' : 'Add Task'),
+        title: Text(_controller.text.isNotEmpty ? 'Edit Task' : 'Add Task'),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton.extended(
-          onPressed: () {
-            if (_controller.text.isNotEmpty) {
-              widget.task.name = _controller.text;
-              widget.task.priority = widget.task.priority;
-              final repository =
-                  Provider.of<Repository<TaskEntity>>(context, listen: false);
-              repository.createOrUpdate(widget.task).then((message) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                  content: Text(message),
-                  behavior: SnackBarBehavior.fixed,
-                ));
-              });
-              Navigator.of(context).pop();
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                content: Text('Empty task can not be add!'),
-                behavior: SnackBarBehavior.fixed,
+      floatingActionButton: BlocBuilder<EditTaskCubit, EditTaskState>(
+        builder: (context, state) {
+          return FloatingActionButton.extended(
+              onPressed: () {
+                if (state.task.name.isNotEmpty) {
+                  String message =
+                      state.task.name.isEmpty ? 'Task Added!' : 'Task Edited!';
+                  context.read<EditTaskCubit>().onSaveChangesClick();
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(message),
+                    behavior: SnackBarBehavior.fixed,
+                  ));
+                  Navigator.of(context).pop();
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('Empty task can not be add!'),
+                    behavior: SnackBarBehavior.fixed,
+                  ));
+                }
+              },
+              label: Row(
+                children: [
+                  Text(state.task.name.isNotEmpty
+                      ? 'Save Changes'
+                      : 'Add task'),
+                  Icon(
+                    state.task.name.isNotEmpty
+                        ? CupertinoIcons.check_mark
+                        : CupertinoIcons.add,
+                    size: 18,
+                  ),
+                ],
               ));
-            }
-          },
-          label: Row(
-            children: [
-              Text(widget.task.name.isNotEmpty ? 'Save Changes' : 'Add task'),
-              Icon(
-                _controller.text.isNotEmpty
-                    ? CupertinoIcons.check_mark
-                    : CupertinoIcons.add,
-                size: 18,
-              ),
-            ],
-          )),
+        },
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            Flex(
-              direction: Axis.horizontal,
-              children: [
-                Flexible(
-                    flex: 1,
-                    child: PriorityCheckBox(
-                      onTap: () {
-                        setState(() {
-                          widget.task.priority = Priority.high;
-                        });
-                      },
-                      label: 'High',
-                      color: highPriority,
-                      isSelected: widget.task.priority == Priority.high,
-                    )),
-                const SizedBox(
-                  width: 8,
-                ),
-                Flexible(
-                    flex: 1,
-                    child: PriorityCheckBox(
-                      onTap: () {
-                        setState(() {
-                          widget.task.priority = Priority.normal;
-                        });
-                      },
-                      label: 'Normal',
-                      color: normalPriority,
-                      isSelected: widget.task.priority == Priority.normal,
-                    )),
-                const SizedBox(
-                  width: 8,
-                ),
-                Flexible(
-                    flex: 1,
-                    child: PriorityCheckBox(
-                      onTap: () {
-                        setState(() {
-                          widget.task.priority = Priority.low;
-                        });
-                      },
-                      label: 'Low',
-                      color: lowPriority,
-                      isSelected: widget.task.priority == Priority.low,
-                    )),
-              ],
+            BlocBuilder<EditTaskCubit, EditTaskState>(
+              builder: (context, state) {
+                final priority = state.task.priority;
+                return Flex(
+                  direction: Axis.horizontal,
+                  children: [
+                    Flexible(
+                        flex: 1,
+                        child: PriorityCheckBox(
+                          onTap: () {
+                            context
+                                .read<EditTaskCubit>()
+                                .onPriorityChange(Priority.high);
+                          },
+                          label: 'High',
+                          color: highPriority,
+                          isSelected: priority == Priority.high,
+                        )),
+                    const SizedBox(
+                      width: 8,
+                    ),
+                    Flexible(
+                        flex: 1,
+                        child: PriorityCheckBox(
+                          onTap: () {
+                            context
+                                .read<EditTaskCubit>()
+                                .onPriorityChange(Priority.normal);
+                          },
+                          label: 'Normal',
+                          color: normalPriority,
+                          isSelected: priority == Priority.normal,
+                        )),
+                    const SizedBox(
+                      width: 8,
+                    ),
+                    Flexible(
+                        flex: 1,
+                        child: PriorityCheckBox(
+                          onTap: () {
+                            context
+                                .read<EditTaskCubit>()
+                                .onPriorityChange(Priority.low);
+                          },
+                          label: 'Low',
+                          color: lowPriority,
+                          isSelected: priority == Priority.low,
+                        )),
+                  ],
+                );
+              },
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -120,12 +132,15 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                 // reverse: true,
                 physics: const BouncingScrollPhysics(),
                 child: TextField(
+                  onChanged: (value) {
+                    context.read<EditTaskCubit>().onTextChange(value);
+                  },
                   maxLines: null,
                   keyboardType: TextInputType.multiline,
                   controller: _controller,
                   decoration: InputDecoration(
                       label: Text(
-                    widget.task.name.isEmpty
+                    _controller.text.isEmpty
                         ? 'Add a task for today...'
                         : 'Edit your task',
                     style: Theme.of(context)
